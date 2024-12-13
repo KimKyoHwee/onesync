@@ -7,7 +7,6 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.stereotype.Component;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +20,12 @@ import static org.springframework.util.StringUtils.commaDelimitedListToSet;
 @RequiredArgsConstructor
 public class ClientUtils {
 
+    /**
+     * Converts Client entity to RegisteredClient object.
+     *
+     * @param client Client entity from database
+     * @return RegisteredClient for Spring Security
+     */
     public RegisteredClient toObject(Client client) {
         Set<String> clientAuthenticationMethods = commaDelimitedListToSet(client.getClientAuthenticationMethods());
         Set<String> authorizationGrantTypes = commaDelimitedListToSet(client.getAuthorizationGrantTypes());
@@ -28,46 +33,56 @@ public class ClientUtils {
         Set<String> clientScopes = commaDelimitedListToSet(client.getScopes());
         Set<String> postLogoutUris = commaDelimitedListToSet(client.getPostLogoutRedirectUris());
 
-        RegisteredClient.Builder registeredClient = RegisteredClient.withId(client.getId())
+        return RegisteredClient.withId(client.getId())
                 .clientId(client.getClientId())
                 .clientIdIssuedAt(client.getClientIdIssuedAt())
                 .clientSecret(client.getClientSecret())
                 .clientSecretExpiresAt(client.getClientSecretExpiresAt())
                 .clientName(client.getClientName())
-                .clientAuthenticationMethods(authenticationMethods -> clientAuthenticationMethods.forEach(authenticationMethod -> authenticationMethods.add(resolveClientAuthenticationMethod(authenticationMethod))))
-                .authorizationGrantTypes((grantTypes) -> authorizationGrantTypes.forEach(grantType -> grantTypes.add(resolveAuthorizationGrantType(grantType))))
-                .redirectUris((uris) -> uris.addAll(redirectUris))
-                .postLogoutRedirectUris(uris -> uris.addAll(postLogoutUris))
-                .scopes((scopes) -> scopes.addAll(clientScopes))
-                .clientSettings(client.getClientSettings())
-                .tokenSettings(client.getTokenSettings());
-
-        return registeredClient.build();
+                .clientAuthenticationMethods(authMethods ->
+                        clientAuthenticationMethods.forEach(authMethod ->
+                                authMethods.add(resolveClientAuthenticationMethod(authMethod))))
+                .authorizationGrantTypes(grantTypes ->
+                        authorizationGrantTypes.forEach(grantType ->
+                                grantTypes.add(resolveAuthorizationGrantType(grantType))))
+                .redirectUris(redirectUris::addAll)
+                .postLogoutRedirectUris(postLogoutUris::addAll)
+                .scopes(clientScopes::addAll)
+                .clientSettings(client.getClientSettings())  // JSON 직렬화/역직렬화 자동 처리
+                .tokenSettings(client.getTokenSettings())    // JSON 직렬화/역직렬화 자동 처리
+                .build();
     }
 
+    /**
+     * Converts RegisteredClient object to Client entity.
+     *
+     * @param registeredClient RegisteredClient for Spring Security
+     * @return Client entity for database
+     */
     public Client toEntity(RegisteredClient registeredClient) {
-        List<String> clientAuthenticationMethods = new ArrayList<>(registeredClient.getClientAuthenticationMethods().size());
-        registeredClient.getClientAuthenticationMethods().forEach(clientAuthenticationMethod -> clientAuthenticationMethods.add(clientAuthenticationMethod.getValue()));
+        List<String> clientAuthenticationMethods = new ArrayList<>();
+        registeredClient.getClientAuthenticationMethods().forEach(authMethod ->
+                clientAuthenticationMethods.add(authMethod.getValue()));
 
-        List<String> authorizationGrantTypes = new ArrayList<>(registeredClient.getAuthorizationGrantTypes().size());
-        registeredClient.getAuthorizationGrantTypes().forEach(authorizationGrantType -> authorizationGrantTypes.add(authorizationGrantType.getValue()));
+        List<String> authorizationGrantTypes = new ArrayList<>();
+        registeredClient.getAuthorizationGrantTypes().forEach(grantType ->
+                authorizationGrantTypes.add(grantType.getValue()));
 
-        Client entity = new Client();
-        entity.setId(registeredClient.getId());
-        entity.setClientId(registeredClient.getClientId());
-        entity.setClientIdIssuedAt(registeredClient.getClientIdIssuedAt());
-        entity.setClientSecret(registeredClient.getClientSecret());
-        entity.setClientSecretExpiresAt(registeredClient.getClientSecretExpiresAt());
-        entity.setClientName(registeredClient.getClientName());
-        entity.setClientAuthenticationMethods(collectionToCommaDelimitedString(clientAuthenticationMethods));
-        entity.setAuthorizationGrantTypes(collectionToCommaDelimitedString(authorizationGrantTypes));
-        entity.setRedirectUris(collectionToCommaDelimitedString(registeredClient.getRedirectUris()));
-        entity.setPostLogoutRedirectUris(collectionToCommaDelimitedString(registeredClient.getPostLogoutRedirectUris()));
-        entity.setScopes(collectionToCommaDelimitedString(registeredClient.getScopes()));
-        entity.setClientSettings(registeredClient.getClientSettings());
-        entity.setTokenSettings(registeredClient.getTokenSettings());
-
-        return entity;
+        return Client.builder()
+                .id(registeredClient.getId())
+                .clientId(registeredClient.getClientId())
+                .clientIdIssuedAt(registeredClient.getClientIdIssuedAt())
+                .clientSecret(registeredClient.getClientSecret())
+                .clientSecretExpiresAt(registeredClient.getClientSecretExpiresAt())
+                .clientName(registeredClient.getClientName())
+                .clientAuthenticationMethods(collectionToCommaDelimitedString(clientAuthenticationMethods))
+                .authorizationGrantTypes(collectionToCommaDelimitedString(authorizationGrantTypes))
+                .redirectUris(collectionToCommaDelimitedString(registeredClient.getRedirectUris()))
+                .postLogoutRedirectUris(collectionToCommaDelimitedString(registeredClient.getPostLogoutRedirectUris()))
+                .scopes(collectionToCommaDelimitedString(registeredClient.getScopes()))
+                .clientSettings(registeredClient.getClientSettings())  // JSON 직렬화/역직렬화 자동 처리
+                .tokenSettings(registeredClient.getTokenSettings())    // JSON 직렬화/역직렬화 자동 처리
+                .build();
     }
 
     private AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
@@ -91,5 +106,4 @@ public class ClientUtils {
         }
         return new ClientAuthenticationMethod(clientAuthenticationMethod);
     }
-
 }
