@@ -1,14 +1,17 @@
 package com.intern.onesync.util;
 
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
-import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.AttributeConverter;
+import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 
-@Converter
 public class TokenSettingsConverter implements AttributeConverter<TokenSettings, String> {
+    private final ObjectMapper objectMapper;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    public TokenSettingsConverter() {
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
+    }
 
     @Override
     public String convertToDatabaseColumn(TokenSettings tokenSettings) {
