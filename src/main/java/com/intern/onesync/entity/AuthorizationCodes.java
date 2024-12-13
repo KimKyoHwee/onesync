@@ -27,5 +27,5 @@ public class AuthorizationCodes {
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "auth_code_clients", referencedColumnName = "client_id")
-    private Clients clients;
+    private Client clients;
 }
