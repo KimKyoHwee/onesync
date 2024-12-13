@@ -26,6 +26,6 @@ public class AuthorizationCodes {
     private LocalDateTime expire;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "auth_code_clients", referencedColumnName = "client_id")
+    @JoinColumn(name = "auth_code_clients", referencedColumnName = "client_pk")
     private Client clients;
 }

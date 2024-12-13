@@ -20,9 +20,8 @@ public class Client {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name="client_id")
+    @Column(name="client_pk")
     private String id;
-
     @Column(unique = true)
     private String clientId;
 
