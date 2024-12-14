@@ -159,7 +159,7 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.debug(false)
                 .ignoring()
-                .requestMatchers("/webjars/**", "/images/**", "/static/css/**", "/assets/**", "/favicon.ico");
+                .requestMatchers("/webjars/**", "/images/**", "/static/css/**", "/assets/**", "/favicon.ico","/css/**", "/js/**", "/images/**");
     }
 
     @Bean

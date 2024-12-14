@@ -22,6 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Member user = getUserByUsername(username);
+        System.out.println(user.getId()+"불러와짐 "+user.getPassword());
         return User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
