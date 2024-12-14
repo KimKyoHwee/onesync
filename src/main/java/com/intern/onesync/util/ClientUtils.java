@@ -36,15 +36,17 @@ public class ClientUtils {
         Set<String> redirectUris = commaDelimitedListToSet(client.getRedirectUris());
         Set<String> clientScopes = commaDelimitedListToSet(client.getScopes());
         Set<String> postLogoutUris = commaDelimitedListToSet(client.getPostLogoutRedirectUris());
-
+        /*
         // Deserialize TokenSettings
-        Map<String, Object> tokenSettingsMap = parseMap(client.getTokenSettings());
+        Map<String, Object> tokenSettingsMap = parseMap(String.valueOf(client.getTokenSettings()));
         TokenSettingsSerializer tokenSettingsSerializer = new TokenSettingsSerializer(tokenSettingsMap);
 
         // Deserialize ClientSettings
-        Map<String, Object> clientSettingsMap = parseMap(client.getClientSettings());
+        Map<String, Object> clientSettingsMap = parseMap(String.valueOf(client.getClientSettings()));
         ClientSettingsSerializer clientSettingsSerializer = new ClientSettingsSerializer(clientSettingsMap);
 
+
+         */
         RegisteredClient.Builder registeredClient = RegisteredClient.withId(client.getId())
                 .clientId(client.getClientId())
                 .clientIdIssuedAt(client.getClientIdIssuedAt())
@@ -63,10 +65,13 @@ public class ClientUtils {
                 )
                 .redirectUris(uris -> uris.addAll(redirectUris))
                 .postLogoutRedirectUris(uris -> uris.addAll(postLogoutUris))
-                .scopes(scopes -> scopes.addAll(clientScopes))
+                .scopes(scopes -> scopes.addAll(clientScopes));
+        /*
                 .clientSettings(clientSettingsSerializer.getClientSettings())
                 .tokenSettings(tokenSettingsSerializer.getTokenSettings());
 
+
+         */
         return registeredClient.build();
     }
 
@@ -96,9 +101,12 @@ public class ClientUtils {
         entity.setRedirectUris(collectionToCommaDelimitedString(registeredClient.getRedirectUris()));
         entity.setPostLogoutRedirectUris(collectionToCommaDelimitedString(registeredClient.getPostLogoutRedirectUris()));
         entity.setScopes(collectionToCommaDelimitedString(registeredClient.getScopes()));
+        /*
         entity.setClientSettings(registeredClient.getClientSettings());
         entity.setTokenSettings(registeredClient.getTokenSettings());
 
+
+         */
         return entity;
     }
 

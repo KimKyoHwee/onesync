@@ -39,6 +39,7 @@ public class Client {
     private String postLogoutRedirectUris;
     @Column(length = 1000)
     private String scopes;
+    /*
     @Column(length = 2000)
     @Convert(converter = ClientSettingsConverter.class)
     private ClientSettings clientSettings;
@@ -46,4 +47,6 @@ public class Client {
     @Convert(converter = TokenSettingsConverter.class)
     private TokenSettings tokenSettings;
 
+
+     */
 }

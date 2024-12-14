@@ -1,6 +1,6 @@
 package com.intern.onesync.entity;
 
-import enums.LogActionTypes;
+import com.intern.onesync.enums.LogActionTypes;
 import jakarta.persistence.*;
 import lombok.*;
 

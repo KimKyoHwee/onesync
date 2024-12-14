@@ -1,4 +1,4 @@
-package enums;
+package com.intern.onesync.enums;
 
 /*
 로그 남길시 카테고리들
