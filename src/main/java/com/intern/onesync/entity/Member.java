@@ -1,11 +1,13 @@
 package com.intern.onesync.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.intern.onesync.dto.BasicJoinDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,7 +50,7 @@ public class Member implements UserDetails {
     private List<MemberRoles> memberRolesList = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "member")
+    @OneToMany(mappedBy = "member", fetch = FetchType.EAGER)
     private List<Authority> authorities = new ArrayList<>();
     private Boolean accountNonExpired;
     private Boolean accountNonLocked;
@@ -75,10 +77,12 @@ public class Member implements UserDetails {
         return this.enabled;
     }
 
-    public static Member create(String username, String password) {
+    public static Member from(BasicJoinDto dto) {
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         return Member.builder()
-                .username(username)
-                .password(password)
+                .username(dto.getUsername())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .email(dto.getEmail())
                 .accountNonExpired(true)
                 .accountNonLocked(true)
                 .credentialsNonExpired(true)

@@ -99,7 +99,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
         http.authorizeHttpRequests(authorize -> {
             authorize
-                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll() // Swagger 허용 경로
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml", "/api/v1/member/**", "api/v1/client/**").permitAll() // Swagger 허용 경로
                     .requestMatchers("/").permitAll()
                     .requestMatchers("/error").permitAll()
                     .anyRequest().authenticated();
@@ -160,7 +160,7 @@ public class SecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.debug(false)
                 .ignoring()
-                .requestMatchers("/webjars/**", "/images/**", "/static/css/**", "/assets/**", "/favicon.ico","/css/**", "/js/**", "/images/**", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml");
+                .requestMatchers("/webjars/**", "/images/**", "/static/css/**", "/assets/**", "/favicon.ico","/css/**", "/js/**", "/images/**", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml", "/api/v1/member/**", "api/v1/client/**");
     }
 
     @Bean
@@ -178,6 +178,7 @@ public class SecurityConfig {
             }
         };
     }
+
 
     /*
     @Bean
