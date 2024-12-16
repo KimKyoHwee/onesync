@@ -44,6 +44,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 
@@ -54,6 +55,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final JWTUtil jwtUtil;
 
     @Bean
     public static BCryptPasswordEncoder passwordEncoder() {
@@ -110,6 +112,8 @@ public class SecurityConfig {
         http.logout(configurer -> {
             configurer.logoutSuccessUrl("/");
         });
+        // JWTFilter 추가
+        http.addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 //        http.formLogin(withDefaults());
         return http.build();
     }
