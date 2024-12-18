@@ -1,27 +1,45 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
 <head>
-    <title>Hello Spring OAuth2</title>
-    <link rel="stylesheet" th:href="@{/css/reset.css}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CJ ONE 로그인</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<div id="login-page">
-    <div class="login-form">
-        <h1>로그인하쇼</h1>
+<div class="login-container">
+    <!-- 로고 섹션 -->
+    <div class="logo-section">
+        <img src="../images/cjonelogo.JPG" alt="CJ ONE 로고" class="logo">
+    </div>
 
-        <div class="message error" th:if="${param.error}">
-            잘못된 입력입니다. 아이디 또는 비밀번호를 다시 확인하세요.
-        </div>
+    <!-- 로그인 폼 -->
+    <div class="login-form">
         <form th:action="@{/login}" method="post">
-            <div>
-                <input type="text" name="username" placeholder="아이디"/>
-            </div>
-            <div>
-                <input type="password" name="password" placeholder="비밀번호"/>
-            </div>
-            <button type="submit">로그인</button>
+            <!-- 사용자 입력 -->
+            <input type="text" name="username" placeholder="CJ ONE 아이디" class="input-field" required>
+            <input type="password" name="password" placeholder="비밀번호" class="input-field" required>
+
+            <!-- 상태 유지 체크박스 -->
+
+            <!-- 로그인 버튼 -->
+            <button type="submit" class="btn login-btn">로그인</button>
         </form>
+
+        <!-- 구분선 -->
+        <div class="divider">
+            <span>또는</span>
+        </div>
+
+        <!-- QR코드 로그인 -->
+        <button type="button" class="btn qr-btn">QR코드 로그인</button>
+
+        <!-- 하단 링크 -->
+        <div class="links">
+            <a th:href="@{/register}">회원가입</a>
+            <a th:href="@{/find-account}">계정 찾기</a>
+            <a th:href="@{/find-password}">비밀번호 찾기</a>
+        </div>
     </div>
 </div>
 </body>

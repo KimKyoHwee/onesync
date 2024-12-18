@@ -37,8 +37,8 @@ public class JWTFilter extends OncePerRequestFilter { //요청당 한번만 실�
         String path = request.getRequestURI();
         if (path.startsWith("/health-check") || path.startsWith("/security-check")
                 || path.startsWith("/auth/reissue") || path.startsWith("/login") || path.startsWith("/reissue")
-                || path.matches("api/v1/client") || path.matches("api/v1/member") || path.matches("/oauth2/authorization/*")
-                || path.startsWith("/auth/issue/mobile")) {
+                || path.matches("/api/v1/client") || path.matches("/api/v1/member") || path.matches("/oauth2/authorization/*")||path.matches("process-login")
+                || path.startsWith("/auth/issue/mobile")||path.matches("/login")) {
             System.out.println("jwt필터 통과로직");
             filterChain.doFilter(request, response);
             return;

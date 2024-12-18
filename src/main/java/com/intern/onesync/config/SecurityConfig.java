@@ -1,4 +1,5 @@
 package com.intern.onesync.config;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
@@ -46,7 +47,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
-
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -69,7 +72,6 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-//        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(withDefaults());	// OpenID Connect 1.0 사용
         Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper = (context) -> {
             OidcUserInfoAuthenticationToken authentication = context.getAuthentication();
             JwtAuthenticationToken principal = (JwtAuthenticationToken) authentication.getPrincipal();
@@ -77,17 +79,18 @@ public class SecurityConfig {
             return new OidcUserInfo(principal.getToken().getClaims());
         };
 
-
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc((oidc) -> oidc
                 .userInfoEndpoint((userInfo) -> userInfo
                         .userInfoMapper(userInfoMapper)
                 ));
 
-        http.exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor( // 인가 실패에 대한 처리를 정의
-                new LoginUrlAuthenticationEntryPoint("/login"),
+        // 수정: 외부 로그인 화면으로 리다이렉트
+        http.exceptionHandling((exceptions) -> exceptions.defaultAuthenticationEntryPointFor(
+                new LoginUrlAuthenticationEntryPoint("http://localhost:3000/login"),
                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
         ));
-        http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults())); // '토큰 검증'에 대한 설정
+
+        http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
 
         return http.build();
     }
@@ -96,31 +99,35 @@ public class SecurityConfig {
      * 인증(Authentication)을 위한 설정
      */
     @Bean
-    @Order(2)
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // 허용할 프론트엔드 도메인
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization", "Location")); // Location 헤더 노출
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
-        http.authorizeHttpRequests(authorize -> {
-            authorize
-                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml", "/api/v1/member/**", "api/v1/client/**").permitAll() // Swagger 허용 경로
-                    .requestMatchers("/").permitAll()
-                    .requestMatchers("/error").permitAll()
-                    .anyRequest().authenticated();
-        });
-        http.formLogin(configurer -> {
-            configurer.loginPage("/login").permitAll();
-        });
-        http.logout(configurer -> {
-            configurer.logoutSuccessUrl("/");
-        });
-        // JWTFilter 추가
-        http.addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
-//        http.formLogin(withDefaults());
+        http.cors(withDefaults()); // CORS 필터 활성화
+        http.authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml", "/api/v1/member/**", "/login", "/oauth2/**").permitAll()
+                .anyRequest().authenticated()
+        );
+        http.formLogin(formLogin -> formLogin
+                .loginPage("/login")
+                .defaultSuccessUrl("/oauth2/authorize?response_type=code&client_id=example&scope=openid&redirect_uri=http://localhost:3000", true)
+                .permitAll()
+        );
         return http.build();
     }
 
-    /**
-     * jwt 생성에 필요한 RSA키 generate, 실제 운영에 사용하려면 KeyStore에 저장해야한다.
-     */
+
     @Bean
     public JWKSource<SecurityContext> jwkSource() {
         KeyPair keyPair = generateRsaKey();
@@ -143,28 +150,21 @@ public class SecurityConfig {
         return keyPair;
     }
 
-    /**
-     * 토큰 검증을 위한 디코더
-     */
     @Bean
     public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
     }
 
-    /**
-     * Authorization server를 구성하기 위한 여러 EndPoint를 설정하는 객체
-     */
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
-        return AuthorizationServerSettings.builder()
-                .build();
+        return AuthorizationServerSettings.builder().build();
     }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.debug(false)
                 .ignoring()
-                .requestMatchers("/webjars/**", "/images/**", "/static/css/**", "/assets/**", "/favicon.ico","/css/**", "/js/**", "/images/**", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml", "/api/v1/member/**", "api/v1/client/**");
+                .requestMatchers("/webjars/**", "/images/**", "/static/css/**", "/assets/**", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/swagger-ui/**", "/v3/api-docs/**", "/v3/api-docs.yaml", "/api/v1/member/**", "api/v1/client/**");
     }
 
     @Bean
@@ -183,49 +183,8 @@ public class SecurityConfig {
         };
     }
 
-
-    /*
-    @Bean
-    public RegisteredClientRepository registeredClientRepository(JdbcOperations jdbcOperations) {
-        RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientName("Your client name")
-                .clientId("your-client")
-                .clientSecret(passwordEncoder().encode("your-secret"))
-                .clientAuthenticationMethods(methods -> {
-                    methods.add(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
-                })
-                .authorizationGrantTypes(types -> {
-                    types.add(AuthorizationGrantType.AUTHORIZATION_CODE);
-                    types.add(AuthorizationGrantType.REFRESH_TOKEN);
-                })
-                .redirectUris(uri -> {
-                    uri.add("http://localhost:3000");
-                })
-                .postLogoutRedirectUris(uri -> {
-                    uri.add("http://localhost:3000");
-                })
-                .scopes(scope -> {
-                    scope.add(OidcScopes.OPENID);
-                    scope.add(OidcScopes.PROFILE);
-                })
-                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
-                .build();
-
-        JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcOperations);
-        try {
-            registeredClientRepository.save(registeredClient);
-        } catch (IllegalArgumentException e) {
-            log.warn("이미 존재하는 클라이언트 : {}", e.getMessage());
-        }
-
-        return registeredClientRepository;
-    }
-
-     */
-
     @Bean
     public JdbcOAuth2AuthorizationService authorizationService(JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
         return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
     }
-
 }
