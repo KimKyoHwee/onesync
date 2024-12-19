@@ -5,11 +5,15 @@ import com.intern.onesync.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Slf4j
 @Transactional
@@ -22,7 +26,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Member user = getUserByUsername(username);
-        System.out.println(user.getId()+"불러와짐 "+user.getPassword());
+
+        // 강제로 권한 설정
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+
         return User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
@@ -30,9 +37,10 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .accountExpired(!user.getAccountNonExpired())
                 .accountLocked(!user.getAccountNonLocked())
                 .credentialsExpired(!user.getCredentialsNonExpired())
-                .authorities(user.getSimpleAuthorities())
+                .authorities(authorities) // 강제로 설정된 권한
                 .build();
     }
+
 
 
     public Member getUserByUsername(String username) throws UsernameNotFoundException {
